@@ -1,9 +1,38 @@
 (function() {
 
+    function Socket() {        
+        const ws = new WebSocket(window.location.href.replace(/^http/, "ws"));
+
+        ws.onopen = function() {
+            ws.send('hello');
+        };
+
+        ws.onmessage = function(event) {
+            if ("string" == typeof event.data) {
+                let message = JSON.parse(event.data);
+                if ("hello" == message.command) {
+                    console.log("Clients connected:", message.clients);
+                }
+            } else if (event.data instanceof Blob) {
+                // TODO
+            } else {
+                console.log("Unhandled:", event);
+            }
+        };
+
+        this.emit = function() {
+            // TODO
+        };
+
+        this.on = function() {
+            // TODO
+        };
+    }
+
     function SharedScreen() {
         const codec = "video/webm;codecs=vp8";
         let self = this;
-        let socket = io();
+        let socket = new Socket();
 
         if (!MediaRecorder.isTypeSupported(codec)) {
             console.error(codec, 'codec not supported');
@@ -18,12 +47,12 @@
                 });
                 recorder.ondataavailable = function(event) {
                     if (event.data.size > 0) {
-                        socket.emit('data', event.data);
+                        //socket.emit('data', event.data);
                     }
                 };
                 recorder.onstart = function() {
                     console.log('Recording started', recorder, stream.getTracks());
-                    socket.emit('view', { mimeType: codec });
+                    //socket.emit('view', { mimeType: codec });
                 };
                 recorder.onstop = function() {
                     console.log('Recording stopped');
@@ -45,7 +74,7 @@
         };
 
         this.view = function(params) {
-            socket.off('data');
+            //socket.off('data');
             document.body.classList.add('playing');
 
             let source = new MediaSource();
@@ -57,10 +86,10 @@
                 }
 
                 let buffer = source.addSourceBuffer(mimeType);
-                socket.on('data', (arrayBuffer) => {
+                /*socket.on('data', (arrayBuffer) => {
                     //console.log('RECV', arrayBuffer);
                     buffer.appendBuffer(arrayBuffer);
-                });
+                });*/
             });
 
             let video = document.querySelector("video");
@@ -73,12 +102,12 @@
         };
 
         this.listen = function() {
-            socket.on('hello', (params) => {
+            /*socket.on('hello', (params) => {
                 console.log('Peer connected', params);
-            });
-            socket.on('view', (params) => {
+            });*/
+            /*socket.on('view', (params) => {
                 self.view(params);
-            });
+            });*/
         };
     }
 
