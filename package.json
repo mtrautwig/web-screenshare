@@ -3,8 +3,13 @@
     "version": "0.0.1",
     "license": "MIT",
     "private": true,
+    "scripts": {
+        "start": "node index.js"
+    },
     "dependencies": {
         "express": "^4.17.1",
+        "openssl": "^1.1.0",
         "socket.io": "^2.2.0"
-    }
+    },
+    "devDependencies": {}
 }
