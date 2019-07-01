@@ -20,12 +20,37 @@
             max-height: 100%;
         }
     </style>
+    <script>
+        window.onerror = function(message, source, line, col) {
+            msgEl = document.getElementById("messages");
+            msgEl.textContent += message + " (" + source + ":" + line + ":" + col + ")\n";
+        };
+
+        if (!window.console) {
+            window.console = {
+                log: function() {
+                    let str = [...arguments].reduce((cur, acc) => {
+                        return cur + ((cur) ? ' ' : '') + acc;
+                    });
+                    msgEl = document.getElementById("messages");
+                    msgEl.textContent += str + "\n";  
+                },
+                info: function() {
+                    window.console.log([...arguments]);
+                },
+                error: function() {
+                    window.console.log([...arguments]);
+                }
+            }
+        }
+    </script>
     <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
     <div id="toolbar">
         <button id="start-share">Share my screen</button>
     </div>
+    <div id="messages"></div>
     <div id="video">
         <video></video>
     </div>
