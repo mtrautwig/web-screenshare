@@ -3,9 +3,14 @@
     function Socket() {        
         const ws = new WebSocket(window.location.href.replace(/^http/, "ws"));
 
-        ws.onopen = function() {
+        ws.onopen = function(event) {
+            console.log('WS connection opened', JSON.stringify(event));
             ws.send('hello');
         };
+
+        ws.onerror = function(event) {
+            console.log('WS connection failed', JSON.stringify(event));
+        }
 
         ws.onmessage = function(event) {
             if ("string" == typeof event.data) {
