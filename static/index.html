@@ -26,7 +26,7 @@
             msgEl.textContent += message + " (" + source + ":" + line + ":" + col + ")\n";
         };
 
-        if (!window.console) {
+        if (true) {
             window.console = {
                 log: function() {
                     let str = [...arguments].reduce((cur, acc) => {
