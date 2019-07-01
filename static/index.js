@@ -1,11 +1,12 @@
 (function() {
 
-    function Socket() {        
+    function Socket() {
+        console.log('Connecting');
         var ws = new WebSocket(window.location.href.replace(/^http/, "ws"));
+        var handlers = {};
 
         ws.onopen = function(event) {
             console.log('WS connection opened', JSON.stringify(event));
-            ws.send('hello');
         };
 
         ws.onerror = function(event) {
@@ -15,35 +16,44 @@
         ws.onmessage = function(event) {
             if ("string" == typeof event.data) {
                 var message = JSON.parse(event.data);
-                if ("hello" == message.command) {
-                    console.log("Clients connected:", message.clients);
+                if (handlers[message.command]) {
+                    handlers[message.command]([message.data]);
+                    return;
                 }
             } else if (event.data instanceof Blob) {
-                // TODO
-            } else {
-                console.log("Unhandled:", event);
+                if (handlers['binary']) {
+                    handlers['binary'](event.data);
+                    return;
+                }
             }
+            console.log("Unhandled:", event);
         };
 
-        this.emit = function() {
-            // TODO
+        this.emit = function(command, data) {
+            ws.send(JSON.stringify({command: command, data: data}));
         };
 
-        this.on = function() {
-            // TODO
+        this.binary = function(data) {
+            ws.send(data);
+        };
+
+        this.on = function(command, handler) {
+            handlers[command] = handler;
         };
     }
 
     function SharedScreen() {
-        var codec = "video/webm;codecs=vp8";
         var self = this;
+        var codec = "video/webm;codecs=vp8";
         var socket = new Socket();
 
-        if (!MediaRecorder.isTypeSupported(codec)) {
-            console.error(codec, 'codec not supported');
-        }
-
         this.share = function() {
+            if (!MediaRecorder) {
+                console.error(codec, 'MediaRecorder not supported');
+            }
+            if (!MediaRecorder.isTypeSupported(codec)) {
+                console.error(codec, 'codec not supported');
+            }
             navigator.mediaDevices.getDisplayMedia().then(stream => {
                 console.log(stream);
 
@@ -52,12 +62,12 @@
                 });
                 recorder.ondataavailable = function(event) {
                     if (event.data.size > 0) {
-                        //socket.emit('data', event.data);
+                        socket.binary(event.data);
                     }
                 };
                 recorder.onstart = function() {
                     console.log('Recording started', recorder, stream.getTracks());
-                    //socket.emit('view', { mimeType: codec });
+                    socket.emit('view', { mimeType: codec });
                 };
                 recorder.onstop = function() {
                     console.log('Recording stopped');
@@ -79,7 +89,7 @@
         };
 
         this.view = function(params) {
-            //socket.off('data');
+            console.log('Starting to play');
             document.body.classList.add('playing');
 
             var source = new MediaSource();
@@ -91,30 +101,39 @@
                 }
 
                 var buffer = source.addSourceBuffer(mimeType);
-                /*socket.on('data', (arrayBuffer) => {
-                    //console.log('RECV', arrayBuffer);
-                    buffer.appendBuffer(arrayBuffer);
-                });*/
+                socket.on('binary', (blob) => {
+                    //console.log('RECV', blob);
+                    var reader = new FileReader();
+                    reader.addEventListener('loadend', (event) => {
+                        buffer.appendBuffer(event.target.result);
+                    });
+                    reader.readAsArrayBuffer(blob);
+                });
             });
 
             var video = document.querySelector("video");
-            video.src = URL.createObjectURL(source);
-            video.addEventListener("loadedmetadata", () => {
+            var onloaded = () => {
                 console.log('Video ready');
-                URL.revokeObjectURL(video.src);
-            });
-            video.play();
+                video.removeEventListener("loadedmetadata", onloaded);
+                //URL.revokeObjectURL(video.src);
+                video.play();
+            };
+
+            video.src = URL.createObjectURL(source);            
+            video.addEventListener("loadedmetadata", onloaded);
         };
 
         this.listen = function() {
-            /*socket.on('hello', (params) => {
-                console.log('Peer connected', params);
-            });*/
-            /*socket.on('view', (params) => {
+            socket.on('hello', (params) => {
+                console.log('Peers connected:', params);
+            });
+            socket.on('view', (params) => {
                 self.view(params);
-            });*/
+            });
         };
     }
+
+    console.log('script started');
 
     var screen = new SharedScreen();
     document.querySelector("#start-share").addEventListener("click", () => {
@@ -123,5 +142,5 @@
 
     screen.listen();
 
-}());
+})();
 

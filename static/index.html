@@ -26,7 +26,7 @@
             msgEl.textContent += message + " (" + source + ":" + line + ":" + col + ")\n";
         };
 
-        if (true) {
+        if (false) {
             window.console = {
                 log: function() {
                     var str = [...arguments].reduce((cur, acc) => {
@@ -49,7 +49,7 @@
     <div id="toolbar">
         <button id="start-share">Share my screen</button>
     </div>
-    <div id="messages"></div>
+    <pre id="messages"></pre>
     <div id="video">
         <video></video>
     </div>

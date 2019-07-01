@@ -11,5 +11,7 @@
         "socket.io": "^2.2.0",
         "ws": "^7.0.1"
     },
-    "devDependencies": {}
+    "devDependencies": {
+        "eslint": "^6.0.1"
+    }
 }
