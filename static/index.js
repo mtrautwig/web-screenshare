@@ -1,7 +1,7 @@
 (function() {
 
     function Socket() {        
-        const ws = new WebSocket(window.location.href.replace(/^http/, "ws"));
+        var ws = new WebSocket(window.location.href.replace(/^http/, "ws"));
 
         ws.onopen = function(event) {
             console.log('WS connection opened', JSON.stringify(event));
@@ -14,7 +14,7 @@
 
         ws.onmessage = function(event) {
             if ("string" == typeof event.data) {
-                let message = JSON.parse(event.data);
+                var message = JSON.parse(event.data);
                 if ("hello" == message.command) {
                     console.log("Clients connected:", message.clients);
                 }
@@ -35,9 +35,9 @@
     }
 
     function SharedScreen() {
-        const codec = "video/webm;codecs=vp8";
-        let self = this;
-        let socket = new Socket();
+        var codec = "video/webm;codecs=vp8";
+        var self = this;
+        var socket = new Socket();
 
         if (!MediaRecorder.isTypeSupported(codec)) {
             console.error(codec, 'codec not supported');
@@ -47,7 +47,7 @@
             navigator.mediaDevices.getDisplayMedia().then(stream => {
                 console.log(stream);
 
-                let recorder = new MediaRecorder(stream, {
+                var recorder = new MediaRecorder(stream, {
                     mimeType: codec
                 });
                 recorder.ondataavailable = function(event) {
@@ -82,22 +82,22 @@
             //socket.off('data');
             document.body.classList.add('playing');
 
-            let source = new MediaSource();
+            var source = new MediaSource();
             source.addEventListener('sourceopen', () => {
                 console.log('Source open', params);
-                let mimeType = codec;
+                var mimeType = codec;
                 if (params && params.mimeType) {
                     mimeType = params.mimeType;
                 }
 
-                let buffer = source.addSourceBuffer(mimeType);
+                var buffer = source.addSourceBuffer(mimeType);
                 /*socket.on('data', (arrayBuffer) => {
                     //console.log('RECV', arrayBuffer);
                     buffer.appendBuffer(arrayBuffer);
                 });*/
             });
 
-            let video = document.querySelector("video");
+            var video = document.querySelector("video");
             video.src = URL.createObjectURL(source);
             video.addEventListener("loadedmetadata", () => {
                 console.log('Video ready');
@@ -116,7 +116,7 @@
         };
     }
 
-    const screen = new SharedScreen();
+    var screen = new SharedScreen();
     document.querySelector("#start-share").addEventListener("click", () => {
         screen.share();
     });

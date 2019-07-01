@@ -29,7 +29,7 @@
         if (true) {
             window.console = {
                 log: function() {
-                    let str = [...arguments].reduce((cur, acc) => {
+                    var str = [...arguments].reduce((cur, acc) => {
                         return cur + ((cur) ? ' ' : '') + acc;
                     });
                     msgEl = document.getElementById("messages");
