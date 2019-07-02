@@ -142,5 +142,8 @@
 
     screen.listen();
 
+    document.querySelector("video").addEventListener("click", () => {
+        document.body.classList.remove("playing");
+    });
 })();
 
