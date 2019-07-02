@@ -92,6 +92,8 @@
             console.log('Starting to play');
             document.body.classList.add('playing');
 
+            var video = document.querySelector("video");
+
             var source = new MediaSource();
             source.addEventListener('sourceopen', () => {
                 console.log('Source open', params);
@@ -103,33 +105,34 @@
                 var chunks = [];
 
                 var buffer = source.addSourceBuffer(mimeType);
-                buffer.addEventListener('onupdateend', () => {
+                var feedBuffer = function() {
                     if (chunks.length > 0) {
                         buffer.appendBuffer(chunks.pop());
+                        if (video.paused) {
+                            video.play();
+                        }
                     }
-                });
+                };
+                buffer.onupdateend = feedBuffer;
 
                 socket.on('binary', (blob) => {
                     //console.log('RECV', blob);
                     var reader = new FileReader();
-                    reader.addEventListener('loadend', (event) => {
-                        var arrayBuffer = event.target.result;
-                        if (buffer.updating) {
-                            chunks.push(arrayBuffer);
-                        } else {
-                            buffer.appendBuffer(arrayBuffer);
+                    reader.onloadend = (event) => {
+                        chunks.push(event.target.result);
+                        if (!buffer.updating) {
+                            feedBuffer();
                         }
-                    });
+                    };
                     reader.readAsArrayBuffer(blob);
                 });
             });
 
-            var video = document.querySelector("video");
             var onloaded = () => {
                 console.log('Video ready');
                 video.removeEventListener("loadedmetadata", onloaded);
                 //URL.revokeObjectURL(video.src);
-                video.play();
+                //video.play();
             };
 
             video.src = URL.createObjectURL(source);            
@@ -157,7 +160,7 @@
 
     var videoElement = document.querySelector("video");
     videoElement.addEventListener("error", (event) => {
-        console.log(event.message);
+        console.log("Video error:", event.message || event);
     });
 })();
 
