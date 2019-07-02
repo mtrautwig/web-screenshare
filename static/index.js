@@ -44,7 +44,7 @@
 
     function SharedScreen() {
         var self = this;
-        var codec = "video/webm;codecs=vp8";
+        var codec = "video/webm;codecs=h264";
         var socket = new Socket();
 
         this.share = function() {
@@ -107,16 +107,9 @@
                 var buffer = source.addSourceBuffer(mimeType);
                 var feedBuffer = function() {
                     if (chunks.length > 0) {
-                        try {
-                            buffer.appendBuffer(chunks.pop());
-                            if (video.paused) {
-                                video.play();
-                            }
-                        } catch (e) {
-                            if (video.error) {
-                                console.log("Video error:", video.error.code, video.error.message);
-                            }
-                            throw e;
+                        buffer.appendBuffer(chunks.pop());
+                        if (video.paused) {
+                            video.play();
                         }
                     }
                 };
@@ -167,7 +160,7 @@
 
     var videoElement = document.querySelector("video");
     videoElement.addEventListener("error", (event) => {
-        console.log("Video error:", event.code, event.message);
+        console.log("Video error:", event.target.error.code, event.target.error.message);
     });
 })();
 
