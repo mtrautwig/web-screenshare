@@ -44,7 +44,7 @@
 
     function SharedScreen() {
         var self = this;
-        var codec = "video/webm;codecs=h264";
+        var codec = "video/webm;codecs=vp8";
         var socket = new Socket();
 
         this.share = function() {
@@ -94,6 +94,14 @@
 
             var video = document.querySelector("video");
 
+            var chunks = [];
+            var buffer = null;
+            var feedBuffer = function() {
+                if (buffer != null && chunks.length > 0) {
+                    buffer.appendBuffer(chunks.shift());
+                }
+            };
+
             var source = new MediaSource();
             source.addEventListener('sourceopen', () => {
                 console.log('Source open', params);
@@ -102,30 +110,24 @@
                     mimeType = params.mimeType;
                 }
 
-                var chunks = [];
-
-                var buffer = source.addSourceBuffer(mimeType);
-                var feedBuffer = function() {
-                    if (chunks.length > 0) {
-                        buffer.appendBuffer(chunks.pop());
-                        if (video.paused) {
-                            video.play();
-                        }
-                    }
-                };
+                buffer = source.addSourceBuffer(mimeType);
                 buffer.onupdateend = feedBuffer;
 
-                socket.on('binary', (blob) => {
-                    //console.log('RECV', blob);
-                    var reader = new FileReader();
-                    reader.onloadend = (event) => {
-                        chunks.push(event.target.result);
-                        if (!buffer.updating) {
-                            feedBuffer();
-                        }
-                    };
-                    reader.readAsArrayBuffer(blob);
-                });
+                if (video.paused) {
+                    video.play();
+                }
+            });
+
+            socket.on('binary', (blob) => {
+                //console.log('RECV', blob);
+                var reader = new FileReader();
+                reader.onloadend = (event) => {
+                    chunks.push(event.target.result);
+                    if (buffer != null && !buffer.updating) {
+                        feedBuffer();
+                    }
+                };
+                reader.readAsArrayBuffer(blob);
             });
 
             var onloaded = () => {
