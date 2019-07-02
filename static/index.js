@@ -160,7 +160,7 @@
 
     var videoElement = document.querySelector("video");
     videoElement.addEventListener("error", (event) => {
-        console.log("Video error:", event.message || event);
+        console.log("Video error:", event.code, event.message);
     });
 })();
 
