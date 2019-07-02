@@ -107,9 +107,16 @@
                 var buffer = source.addSourceBuffer(mimeType);
                 var feedBuffer = function() {
                     if (chunks.length > 0) {
-                        buffer.appendBuffer(chunks.pop());
-                        if (video.paused) {
-                            video.play();
+                        try {
+                            buffer.appendBuffer(chunks.pop());
+                            if (video.paused) {
+                                video.play();
+                            }
+                        } catch (e) {
+                            if (video.error) {
+                                console.log("Video error:", video.error.code, video.error.message);
+                            }
+                            throw e;
                         }
                     }
                 };
