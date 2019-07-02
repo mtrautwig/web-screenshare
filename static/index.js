@@ -100,12 +100,25 @@
                     mimeType = params.mimeType;
                 }
 
+                var chunks = [];
+
                 var buffer = source.addSourceBuffer(mimeType);
+                buffer.addEventListener('onupdateend', () => {
+                    if (chunks.length > 0) {
+                        buffer.appendBuffer(chunks.pop());
+                    }
+                });
+
                 socket.on('binary', (blob) => {
                     //console.log('RECV', blob);
                     var reader = new FileReader();
                     reader.addEventListener('loadend', (event) => {
-                        buffer.appendBuffer(event.target.result);
+                        var arrayBuffer = event.target.result;
+                        if (buffer.updating) {
+                            chunks.push(arrayBuffer);
+                        } else {
+                            buffer.appendBuffer(arrayBuffer);
+                        }
                     });
                     reader.readAsArrayBuffer(blob);
                 });
