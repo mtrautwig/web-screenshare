@@ -1,30 +1,24 @@
-Web-based Screen Sharing
-========================
+Web-based Digital Signage
+=========================
 
-This is a prototype for sending a Desktop screen to our [Samsung Smart TV](https://developer.samsung.com/tv/develop/specifications/general-specifications). It uses the following technologies:
+This is a prototype for getting content on the [Samsung Smart TV](https://developer.samsung.com/tv/develop/specifications/general-specifications)
+in our office room. This screen has a built-in Web Browser based on a somewhat usable Chromium version.
 
-  * _Media Capture_ and _MediaStream Recording_ to get an image stream from the Desktop and record it as WebM video
-  * _Sockets.io_ and a small _NodeJS_ server to transport video data from the Desktop to the TV (as the latter does not support WebRTC yet)
-  * _Media Source Extensions (MSE)_ on the TV to feed the video data into a `<video>` HTML element
+This web site can run on as many screens as you like (eg for remote collaboration), one serves as a control terminal. Commands to show content are
+sent via WebSockets from the control terminal to the WebSockets server, which broadcasts them to all other screens. Following content is supported, either by dragging or pasting it into the Browser:
 
-Setup
------
-
-Media Capture mandates HTTPS in order to capture the desktop. So first, create a private key and self-signed certificate:
-
-```
-# openssl genrsa -out key.pem
-# openssl req -new -x509 -key key.pem -out cert.pem -subj "/CN=localhost/" -days +365
-```
-
-Replace "localhost" with your server name or IP address.
+* Images. Use Firefox' built-in Screenshot tool to project a screen on the displays.
+* HTML snippets if you want some dynamic content.
+* URLs to show things reachable via the public Internet (though somewhat limited, because cross-origin embedding is usually disabled).
 
 Run
 ---
+
+You need a NodeJS server which all screens connect to:
 
 ```$ nodejs index.js```
 
 Then direct both your Browser on your Desktop system and the Browser on the Smart TV to:\
 https://localhost:3000/
 
-(again replace "localhost" like above)
+(replace "localhost" with a URL which both browsers can reach)
