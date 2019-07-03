@@ -52,8 +52,9 @@
 
         this.view = function(data) {
             var displayEl = document.getElementById('display');
-            [...displayEl.children].forEach(c => displayEl.removeChild(c));
-
+            while (displayEl.children.length) {
+                displayEl.removeChild(displayEl.children[0]);
+            }            
             var imgEl = document.createElement('img');
             imgEl.src = window.URL.createObjectURL(new Blob([data]));
             displayEl.appendChild(imgEl);
