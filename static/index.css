@@ -1,0 +1,92 @@
+html, body, #display {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+body {
+    background: #000;
+    font-family: sans-serif;
+}
+
+#display {
+    z-index: 1;
+}
+
+#display img {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+#display iframe {
+    width: 100%;
+    height: 100%;
+    color: #000;
+    background: #fff;
+    border: 0;
+}
+
+#toolbar {
+    z-index: 10;
+    position: absolute;
+    display: flex;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 0;
+    overflow: hidden;
+    border-top: 10px solid rgba(0, 0, 0, 0);
+}
+#toolbar:hover, #toolbar.dragging {
+    height: 200px;
+    color: #fff;
+    border-top: 5px solid rgb(0, 61, 143);
+    border-bottom: 5px solid rgb(0, 61, 143);
+    background-color: rgb(0, 61, 143);
+}
+#toolbar div {
+    margin: 10px;
+}
+#toolbar div.info {
+    box-sizing: border-box;
+    width: 20%;
+    height: 100%;
+    margin: 0;
+    border: 1px solid #fff;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+}
+#toolbar #num-screens {
+    font-weight: bold;
+}
+
+#clock {
+    z-index: 0;
+    display: flex;
+    position: absolute;
+    left: 20%;
+    right: 20%;
+    bottom: 20%;
+    color: #fff;
+    justify-content: space-between;
+    align-items: center;
+}
+#clock-weather {
+    margin-right: 20px;
+}
+#clock-date {
+    text-align: center;
+    font-size: 32pt;
+    font-weight: bold;
+}
+#clock-time {
+    text-align: center;
+    font-size: 32pt;
+    font-weight: bold;
+}

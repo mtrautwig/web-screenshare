@@ -1,45 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <style>
-        #overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 250px;
-        }
-        #overlay.dragging {
-            background-color: #fff;
-            opacity: 0.1;
-        }
-
-        html, body, #display {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
-
-        body {
-            background: #000;
-        }
-
-        #display img {
-            width: 100%;
-            height: 100%;
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="index.css">
 </head>
 <body>
-    <div id="overlay">        
+    <div id="toolbar">
+        <div class="info">
+            <span>You may paste an image or HTML file to display it on all screens. There are currently <span id="num-screens">0</span> screens connected.</span>
+        </div>
+        <div>
+            <button id="btn-clock">Clock</button>
+        </div>
     </div>
-    <div id="display">
-    </div>
+
+    <div id="display"></div>
+
+    <template id="clock-template">
+        <div id="clock">
+            <div id="clock-weather">                
+                <div id="cont_12b2a7b6d813b0bcab652a60b68620f6"><script type="text/javascript" async src="https://www.daswetter.com/wid_loader/12b2a7b6d813b0bcab652a60b68620f6"></script></div>
+            </div>
+            <div>
+                <div id="clock-date"></div>
+                <div id="clock-time"></div>
+            </div>
+        </div>
+    </template>
     <script src="index.js"></script>
 </body>
 </html>
