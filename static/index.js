@@ -42,127 +42,73 @@
         };
     }
 
-    function SharedScreen() {
+    function MediaBroadcast() {
         var self = this;
-        var codec = "video/webm;codecs=vp8";
         var socket = new Socket();
 
-        this.share = function() {
-            if (!MediaRecorder) {
-                console.error(codec, 'MediaRecorder not supported');
-            }
-            if (!MediaRecorder.isTypeSupported(codec)) {
-                console.error(codec, 'codec not supported');
-            }
-            navigator.mediaDevices.getDisplayMedia().then(stream => {
-                console.log(stream);
-
-                var recorder = new MediaRecorder(stream, {
-                    mimeType: codec
-                });
-                recorder.ondataavailable = function(event) {
-                    if (event.data.size > 0) {
-                        socket.binary(event.data);
-                    }
-                };
-                recorder.onstart = function() {
-                    console.log('Recording started', recorder, stream.getTracks());
-                    socket.emit('view', { mimeType: codec });
-                };
-                recorder.onstop = function() {
-                    console.log('Recording stopped');
-                };
-                recorder.onwarning = function(event) {
-                    console.log(event);
-                };
-                recorder.onpause = function(event) {
-                    console.log(event);
-                };
-
-                stream.oninactive = function() {
-                    recorder.stop();
-                };
-
-                recorder.start(200);
-                window.recorder = recorder;
-            });    
+        this.send = function(data) {
+            socket.binary(data);
         };
 
-        this.view = function(params) {
-            console.log('Starting to play');
-            document.body.classList.add('playing');
+        this.view = function(data) {
+            var displayEl = document.getElementById('display');
+            [...displayEl.children].forEach(c => displayEl.removeChild(c));
 
-            var video = document.querySelector("video");
-
-            var chunks = [];
-            var buffer = null;
-            var feedBuffer = function() {
-                if (buffer != null && chunks.length > 0) {
-                    buffer.appendBuffer(chunks.shift());
-                }
-            };
-
-            var source = new MediaSource();
-            source.addEventListener('sourceopen', () => {
-                console.log('Source open', params);
-                var mimeType = codec;
-                if (params && params.mimeType) {
-                    mimeType = params.mimeType;
-                }
-
-                buffer = source.addSourceBuffer(mimeType);
-                buffer.onupdateend = feedBuffer;
-
-                if (video.paused) {
-                    video.play();
-                }
-            });
-
-            socket.on('binary', (blob) => {
-                //console.log('RECV', blob);
-                var reader = new FileReader();
-                reader.onloadend = (event) => {
-                    chunks.push(event.target.result);
-                    if (buffer != null && !buffer.updating) {
-                        feedBuffer();
-                    }
-                };
-                reader.readAsArrayBuffer(blob);
-            });
-
-            var onloaded = () => {
-                console.log('Video ready');
-                video.removeEventListener("loadedmetadata", onloaded);
-                //URL.revokeObjectURL(video.src);
-                //video.play();
-            };
-
-            video.src = URL.createObjectURL(source);            
-            video.addEventListener("loadedmetadata", onloaded);
+            var imgEl = document.createElement('img');
+            imgEl.src = window.URL.createObjectURL(new Blob([data]));
+            displayEl.appendChild(imgEl);
         };
 
         this.listen = function() {
             socket.on('hello', (params) => {
                 console.log('Peers connected:', params);
             });
-            socket.on('view', (params) => {
-                self.view(params);
+            socket.on('binary', (data) => {
+                self.view(data);
             });
         };
     }
 
     console.log('script started');
 
-    var screen = new SharedScreen();
-    document.querySelector("#start-share").addEventListener("click", () => {
-        screen.share();
-    });
-
+    var screen = new MediaBroadcast();
     screen.listen();
-
-    var videoElement = document.querySelector("video");
-    videoElement.addEventListener("error", (event) => {
-        console.log("Video error:", event.target.error.code, event.target.error.message);
+    
+    var overlay = document.querySelector('#overlay');
+    overlay.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'copy';
+        event.target.classList.add('dragging');
     });
+    overlay.addEventListener('dragleave', (event) => {
+        event.target.classList.remove('dragging');
+    });
+    overlay.addEventListener('drop', (event) => {
+        event.target.classList.remove('dragging');
+
+        event.preventDefault();
+        var files = event.dataTransfer.files;
+        if (files.length) {
+            acceptFile(files[0]);
+        }
+    });
+
+    document.addEventListener('paste', (event) => {
+        var files = event.clipboardData.files;
+        if (files.length) {
+            acceptFile(files[0]);
+        }
+    });
+
+    function acceptFile(file) {
+        var reader = new FileReader();
+        reader.onloadend = (ev) => {
+            var data = ev.target.result;
+            screen.view(data);
+            screen.send(data);
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
 })();
 
