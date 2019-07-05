@@ -15,6 +15,7 @@ wss.on('connection', function(ws) {
         if (typeof(message) == 'string') {
             var msg = JSON.parse(message);
             if ('hello' == msg.command) {
+                ws.send(message);
                 return; // heartbeat
             }
         }

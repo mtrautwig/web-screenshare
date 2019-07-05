@@ -4,6 +4,7 @@
         var self = this;
         var ws;
         var heartbeatTimer = null;
+        var lastMessage = Date.now();
         var handlers = {};
 
         function connect() {
@@ -12,9 +13,14 @@
     
             ws.onopen = function() {
                 console.log('WS connection opened');
+                var heartBeatFreq = 55000;
                 heartbeatTimer = window.setInterval(() => {
+                    if (Date.now() - lastMessage > 2*heartBeatFreq) {
+                        window.location.reload();
+                        return;
+                    }
                     self.emit('hello', {});
-                }, 55000)
+                }, heartBeatFreq)
             };
     
             ws.onclose = function(event) {
@@ -30,6 +36,7 @@
             }
     
             ws.onmessage = function(event) {
+                lastMessage = Date.now();
                 if ("string" == typeof event.data) {
                     var message = JSON.parse(event.data);
                     if (handlers[message.command]) {
