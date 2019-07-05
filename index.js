@@ -12,6 +12,13 @@ wss.on('connection', function(ws) {
     console.log('a user connected');
 
     ws.on('message', function(message) {
+        if (typeof(message) == 'string') {
+            var msg = JSON.parse(message);
+            if ('hello' == msg.command) {
+                return; // heartbeat
+            }
+        }
+
         wss.clients.forEach(client => {
             if (client !== ws && client.readyState === WebSocket.OPEN) {
                 client.send(message);

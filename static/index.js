@@ -1,33 +1,50 @@
 (function() {
 
     function Socket() {
-        console.log('Connecting');
-        var ws = new WebSocket(window.location.href.replace(/^http/, "ws"));
+        var self = this;
+        var ws;
+        var heartbeatTimer = null;
         var handlers = {};
 
-        ws.onopen = function(event) {
-            console.log('WS connection opened', JSON.stringify(event));
-        };
-
-        ws.onerror = function(event) {
-            console.log('WS connection failed', JSON.stringify(event));
-        }
-
-        ws.onmessage = function(event) {
-            if ("string" == typeof event.data) {
-                var message = JSON.parse(event.data);
-                if (handlers[message.command]) {
-                    handlers[message.command]([message.data]);
-                    return;
-                }
-            } else if (event.data instanceof Blob) {
-                if (handlers['binary']) {
-                    handlers['binary'](event.data);
-                    return;
-                }
+        function connect() {
+            console.log('Connecting');
+            ws = new WebSocket(window.location.href.replace(/^http/, "ws"));
+    
+            ws.onopen = function() {
+                console.log('WS connection opened');
+                heartbeatTimer = window.setInterval(() => {
+                    self.emit('hello', {});
+                }, 55000)
+            };
+    
+            ws.onclose = function(event) {
+                console.log('WS connection closed', event.code, event.reason);
+                ws.close();
+                window.clearInterval(heartbeatTimer);
+                window.setTimeout(connect, 1000);
+            };
+    
+            ws.onerror = function(event) {
+                console.log('WS connection failed', event.code, event.reason);
+                ws.close();
             }
-            console.log("Unhandled:", event);
-        };
+    
+            ws.onmessage = function(event) {
+                if ("string" == typeof event.data) {
+                    var message = JSON.parse(event.data);
+                    if (handlers[message.command]) {
+                        handlers[message.command]([message.data]);
+                        return;
+                    }
+                } else if (event.data instanceof Blob) {
+                    if (handlers['binary']) {
+                        handlers['binary'](event.data);
+                        return;
+                    }
+                }
+                console.log("Unhandled:", event);
+            };    
+        }
 
         this.emit = function(command, data) {
             ws.send(JSON.stringify({command: command, data: data}));
@@ -40,6 +57,8 @@
         this.on = function(command, handler) {
             handlers[command] = handler;
         };
+
+        connect();
     }
 
     function MediaDisplay() {
