@@ -143,8 +143,106 @@
             displayEl.appendChild(iframeEl);
         };
 
+        this.viewVideo = function(params) {
+            console.log('Starting to play video');
+
+            var displayEl = clear();
+            var video = document.createElement('video');
+            displayEl.appendChild(video);
+
+            var appendChunks = [];
+            var buffer = null;
+            var appendBuffer = function() {
+                if (buffer != null && !buffer.updating && appendChunks.length > 0) {
+                    buffer.appendBuffer(appendChunks.shift());
+                }
+            };
+
+            var source = new MediaSource();
+            source.addEventListener('sourceopen', () => {
+                console.log('Source open', params);
+                var mimeType = "video/webm;codecs=vp8";
+                if (params && params.mimeType) {
+                    mimeType = params.mimeType;
+                }
+
+                buffer = source.addSourceBuffer(mimeType);
+                if ('function' == typeof buffer.addEventListener) {
+                    // supported since Chrome 53
+                    buffer.addEventListener('updateend', appendBuffer);
+                } else {
+                    window.setInterval(appendBuffer, 50);
+                }
+            });
+
+            var onvideoloaded = () => {
+                console.log('Video ready');
+                video.removeEventListener("loadedmetadata", onvideoloaded);
+                if (video.paused) {
+                    video.play();
+                }
+                URL.revokeObjectURL(video.src);
+            };
+
+            video.src = URL.createObjectURL(source);            
+            video.addEventListener("loadedmetadata", onvideoloaded);
+
+            return function(blob) {
+                var reader = new FileReader();
+                reader.onloadend = (event) => {
+                    appendChunks.push(event.target.result);
+                    appendBuffer();
+                };
+                reader.readAsArrayBuffer(blob);
+            };
+        };
+
         this.showConnected = function(count) {
             document.querySelector('#num-screens').textContent = count;
+        };
+    }
+
+    function SharedDesktop() {
+        var codec = "video/webm;codecs=vp8";
+
+        this.share = function(socket) {
+            if (!MediaRecorder) {
+                console.error(codec, 'MediaRecorder not supported');
+            }
+            if (!MediaRecorder.isTypeSupported(codec)) {
+                console.error(codec, 'codec not supported');
+            }
+            navigator.mediaDevices.getDisplayMedia().then(stream => {
+                console.log(stream);
+
+                var recorder = new MediaRecorder(stream, {
+                    mimeType: codec
+                });
+                recorder.ondataavailable = function(event) {
+                    if (event.data.size > 0) {
+                        socket.binary(event.data);
+                    }
+                };
+                recorder.onstart = function() {
+                    console.log('Recording started', recorder, stream.getTracks());
+                    socket.emit('video', { mimeType: codec });
+                };
+                recorder.onstop = function() {
+                    console.log('Recording stopped');
+                };
+                recorder.onwarning = function(event) {
+                    console.log(event);
+                };
+                recorder.onpause = function(event) {
+                    console.log(event);
+                };
+
+                stream.oninactive = function() {
+                    recorder.stop();
+                };
+
+                recorder.start(50);
+            });
         };
     }
 
@@ -176,6 +274,10 @@
             socket.emit('url', url);
         };
 
+        this.shareDesktop = function() {
+            new SharedDesktop().share(socket);
+        };
+
         this.reload = function() {
             socket.emit('reload', {});
             window.location.reload();
@@ -200,6 +302,12 @@
             });
             socket.on('url', (url) => {
                 display.viewUrl(url);
+            });
+            socket.on('video', (params) => {
+                var dataHandler = display.viewVideo(params);
+                socket.on('binary', (data) => {
+                    dataHandler(data);
+                });
             });
             socket.on('reload', () => {
                 window.location.reload();
@@ -269,7 +377,10 @@
     document.querySelector('#btn-clock').addEventListener('click', () => {
        broadcast.viewClock();
     });
-    document.querySelector('#btn-reload').addEventListener('click', () => {
+    document.querySelector('#btn-desktop').addEventListener('click', () => {
+        broadcast.shareDesktop();
+     });
+     document.querySelector('#btn-reload').addEventListener('click', () => {
         broadcast.reload();
      });
  })();
