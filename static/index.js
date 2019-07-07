@@ -176,13 +176,21 @@
             socket.emit('url', url);
         };
 
+        this.reload = function() {
+            socket.emit('reload', {});
+            window.location.reload();
+        }
+
         this.listen = function() {
             socket.on('hello', (params) => {
                 console.log('Peers connected:', params);
                 display.showConnected(params);
-            });
+            });            
             socket.on('binary', (data) => {
                 display.viewImage(data);
+            });
+            socket.on('clear', () => {
+                display.clear();
             });
             socket.on('clock', () => {
                 display.viewClock();
@@ -192,6 +200,9 @@
             });
             socket.on('url', (url) => {
                 display.viewUrl(url);
+            });
+            socket.on('reload', () => {
+                window.location.reload();
             });
         };
     }
@@ -258,5 +269,8 @@
     document.querySelector('#btn-clock').addEventListener('click', () => {
        broadcast.viewClock();
     });
-})();
+    document.querySelector('#btn-reload').addEventListener('click', () => {
+        broadcast.reload();
+     });
+ })();
 
