@@ -15,7 +15,11 @@ wss.on('connection', function(ws) {
         if (typeof(message) == 'string') {
             var msg = JSON.parse(message);
             if ('hello' == msg.command) {
-                ws.send(message);
+                let clients = wss.clients.size;
+                ws.send(JSON.stringify({
+                    "command": "hello",
+                    "data": clients
+                }));
                 return; // heartbeat
             }
         }
